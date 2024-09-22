@@ -86,17 +86,16 @@ class HapticFeedbackUtil(context: Context) {
     }
 
     // GESTURE_THRESHOLD_ACTIVATE
-    fun gestureThresholdActivateFeedback(vibrator: Vibrator) {
+    fun gestureThresholdActivateFeedback() {
         val pattern = longArrayOf(0, 200, 50, 200)
         vibratePattern(pattern)
     }
 
     // GESTURE_THRESHOLD_DEACTIVATE
-    fun gestureThresholdDeactivateFeedback(vibrator: Vibrator) {
+    fun gestureThresholdDeactivateFeedback() {
         val pattern = longArrayOf(0, 200, 50, 100)
         vibratePattern(pattern)
     }
-
 
 
 

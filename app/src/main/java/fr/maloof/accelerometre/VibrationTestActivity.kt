@@ -40,6 +40,9 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
         { hapticFeedbackUtil.rejectFeedback() },
         { hapticFeedbackUtil.toggleOnFeedback() },
         { hapticFeedbackUtil.toggleOffFeedback() },
+        { hapticFeedbackUtil.toggleOffFeedback() },
+        { hapticFeedbackUtil.gestureThresholdActivateFeedback() },
+        { hapticFeedbackUtil.gestureThresholdDeactivateFeedback() },
         { hapticFeedbackUtil.dragStartFeedback() },
         { hapticFeedbackUtil.segmentTickFeedback() },
         { hapticFeedbackUtil.segmentFrequentTickFeedback() }
@@ -77,7 +80,7 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
     fun startHapticFeedbackSequence() {
         if (vibrationIndex < hapticFeedbackMethods.size) {
             // Liste des noms des vibrations correspondant à chaque méthode
-             val vibrationNames = listOf(
+            val vibrationNames = listOf(
                 "Keyboard Release Feedback",           // keyboardReleaseFeedback
                 "Virtual Key Release Feedback",        // virtualKeyReleaseFeedback
                 "Clock Tick Feedback",                 // clockTickFeedback
@@ -92,10 +95,14 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
                 "Reject Feedback",                     // rejectFeedback
                 "Toggle On Feedback",                  // toggleOnFeedback
                 "Toggle Off Feedback",                 // toggleOffFeedback
+                "Toggle Off Feedback",                 // toggleOffFeedback (répété dans ton code)
+                "Gesture Threshold Activate Feedback", // gestureThresholdActivateFeedback
+                "Gesture Threshold Deactivate Feedback", // gestureThresholdDeactivateFeedback
                 "Drag Start Feedback",                 // dragStartFeedback
                 "Segment Tick Feedback",               // segmentTickFeedback
                 "Segment Frequent Tick Feedback"       // segmentFrequentTickFeedback
             )
+
 
             // Afficher le nom de la vibration dans le Logcat
             val vibrationName = vibrationNames[vibrationIndex]
