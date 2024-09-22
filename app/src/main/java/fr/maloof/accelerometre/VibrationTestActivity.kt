@@ -17,14 +17,16 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
     private lateinit var vibrator: Vibrator
-    private lateinit var hapticFeedbackUtil: HapticFeedbackUtil  // Utilisation de HapticFeedbackUtil
+    private lateinit var hapticFeedbackUtil: HapticFeedbackUtil
+    private val alpha = 0.8f  // Le facteur de filtre (ajuste si nécessaire)
+    private var gravity = FloatArray(3)
+    private var linearAcceleration = FloatArray(3)
 
     // Utilise Triple pour stocker les données X, Y, Z
     private val accelerometerData = mutableListOf<Triple<Float, Float, Float>>()
 
     private var vibrationIndex = 0
 
-    // Liste des vibrations via HapticFeedbackUtil
     private val hapticFeedbackMethods = listOf(
         { hapticFeedbackUtil.keyboardReleaseFeedback() },
         { hapticFeedbackUtil.virtualKeyReleaseFeedback() },
@@ -57,7 +59,6 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
-        // Initialisation de HapticFeedbackUtil
         hapticFeedbackUtil = HapticFeedbackUtil(this)
 
         // Vérification si l'accéléromètre est disponible
@@ -65,77 +66,70 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
             println("Aucun capteur d'accéléromètre disponible.")
         }
 
-        // Démarrer la capture des données de l'accéléromètre
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-
         // Récupération du bouton après avoir défini la vue
         val startButton = findViewById<Button>(R.id.button_start_vibration)
         startButton.setOnClickListener {
             startHapticFeedbackSequence()  // Lancer la séquence des vibrations de HapticFeedbackUtil
         }
-
     }
-
 
     fun startHapticFeedbackSequence() {
         if (vibrationIndex < hapticFeedbackMethods.size) {
-            // Liste des noms des vibrations correspondant à chaque méthode
             val vibrationNames = listOf(
-                "Keyboard Release Feedback",           // keyboardReleaseFeedback
-                "Virtual Key Release Feedback",        // virtualKeyReleaseFeedback
-                "Clock Tick Feedback",                 // clockTickFeedback
-                "Text Handle Move Feedback",           // textHandleMoveFeedback
-                "Gesture End Feedback",                // gestureEndFeedback
-                "Keyboard Press Feedback",             // keyboardPressFeedback
-                "Virtual Key Feedback",                // virtualKeyFeedback
-                "Context Click Feedback",              // contextClickFeedback
-                "Gesture Start Feedback",              // gestureStartFeedback
-                "Confirm Feedback",                    // confirmFeedback
-                "Long Press Feedback",                 // longPressFeedback
-                "Reject Feedback",                     // rejectFeedback
-                "Toggle On Feedback",                  // toggleOnFeedback
-                "Toggle Off Feedback",                 // toggleOffFeedback
-                "Toggle Off Feedback",                 // toggleOffFeedback (répété dans ton code)
-                "Gesture Threshold Activate Feedback", // gestureThresholdActivateFeedback
-                "Gesture Threshold Deactivate Feedback", // gestureThresholdDeactivateFeedback
-                "Drag Start Feedback",                 // dragStartFeedback
-                "Segment Tick Feedback",               // segmentTickFeedback
-                "Segment Frequent Tick Feedback"       // segmentFrequentTickFeedback
+                "Keyboard Release Feedback",
+                "Virtual Key Release Feedback",
+                "Clock Tick Feedback",
+                "Text Handle Move Feedback",
+                "Gesture End Feedback",
+                "Keyboard Press Feedback",
+                "Virtual Key Feedback",
+                "Context Click Feedback",
+                "Gesture Start Feedback",
+                "Confirm Feedback",
+                "Long Press Feedback",
+                "Reject Feedback",
+                "Toggle On Feedback",
+                "Toggle Off Feedback",
+                "Toggle Off Feedback",
+                "Gesture Threshold Activate Feedback",
+                "Gesture Threshold Deactivate Feedback",
+                "Drag Start Feedback",
+                "Segment Tick Feedback",
+                "Segment Frequent Tick Feedback"
             )
 
-
-            // Afficher le nom de la vibration dans le Logcat
             val vibrationName = vibrationNames[vibrationIndex]
-            println("Playing vibration: $vibrationName")
+            println("Preparing to play vibration: $vibrationName")
 
-            // Démarre l'enregistrement des données de l'accéléromètre avant la vibration
+            val handler = android.os.Handler(Looper.getMainLooper())
+
+            // Commence l'enregistrement des données juste avant de jouer la vibration
+            println("Starting accelerometer data capture")
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
 
-            // Appelle directement la lambda correspondante à l'index actuel pour jouer la vibration
-            hapticFeedbackMethods[vibrationIndex]()
-
-            // Définis la durée de chaque vibration, ici 500ms (ou adapte cette valeur selon chaque vibration)
-            val vibrationDuration = 500L  // Ajuste selon la durée de la vibration actuelle
-
-            // Utiliser un Handler pour arrêter la capture des données après la vibration
-            val handler = android.os.Handler(Looper.getMainLooper())
+            // Lancer la vibration après 1 seconde d'enregistrement des données
             handler.postDelayed({
-                // Arrête l'enregistrement des données après la vibration
-                stopVibrationAndCaptureData()
-            }, vibrationDuration)
+                println("Playing vibration: $vibrationName")
 
-            // Incrémentation de l'index pour la prochaine vibration
+                // Joue la vibration correspondante à l'index actuel
+                hapticFeedbackMethods[vibrationIndex]()
+
+                // Capture les données pendant 2 secondes après la vibration
+                handler.postDelayed({
+                    println("Fin de la capture après la vibration.")
+                    stopVibrationAndCaptureData()  // Arrête l'enregistrement des données
+                }, 2000)  // Durée de capture des données après la vibration
+
+            }, 1000)  // Délai de 1 seconde avant la vibration
+
             vibrationIndex++
         } else {
             println("Toutes les vibrations ont été jouées.")
         }
     }
 
-
-
-    override fun onSensorChanged(event: SensorEvent?) {
+   /* override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            // Capture des données d'accélération sur les axes X, Y, Z
             val x = it.values[0]
             val y = it.values[1]
             val z = it.values[2]
@@ -143,8 +137,26 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
             // Stocker les données dans un Triple
             accelerometerData.add(Triple(x, y, z))
 
-            // Affichage des données dans le Logcat
             println("Acceleration X: $x, Y: $y, Z: $z")
+        }
+    }*/
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        event?.let {
+            // Filtrer la gravité de chaque axe
+            gravity[0] = alpha * gravity[0] + (1 - alpha) * it.values[0]
+            gravity[1] = alpha * gravity[1] + (1 - alpha) * it.values[1]
+            gravity[2] = alpha * gravity[2] + (1 - alpha) * it.values[2]
+
+            // Enlever la gravité pour obtenir l'accélération linéaire (mouvement pur)
+            linearAcceleration[0] = it.values[0] - gravity[0]
+            linearAcceleration[1] = it.values[1] - gravity[1]
+            linearAcceleration[2] = it.values[2] - gravity[2]
+
+            // Stocker les données filtrées
+            accelerometerData.add(Triple(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]))
+
+            println("Linear Acceleration X: ${linearAcceleration[0]}, Y: ${linearAcceleration[1]}, Z: ${linearAcceleration[2]}")
         }
     }
 
@@ -153,13 +165,9 @@ class VibrationTestActivity : AppCompatActivity(), SensorEventListener {
     }
 
     fun stopVibrationAndCaptureData() {
-        // Arrêt du capteur et affichage des données
+        // Arrêter l'accéléromètre ici
         sensorManager.unregisterListener(this)
-
-        // Affichage ou exportation des données
-        accelerometerData.forEach { (x, y, z) ->
-            println("Acceleration X: $x, Y: $y, Z: $z")
-        }
+        println("Accéléromètre mis en pause.")
     }
 
     override fun onPause() {
